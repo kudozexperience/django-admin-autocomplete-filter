@@ -18,11 +18,11 @@ class AutocompleteSelect(Base):
 class AutocompleteFilter(admin.SimpleListFilter):
     template = 'django-admin-autocomplete-filter/autocomplete-filter.html'
     title = ''
-    field_name = ''
     field_pk = 'id'
     is_placeholder_title = False
     widget_attrs = {}
     rel_model = None
+    rel_parameter_name = None
     form_field = forms.ModelChoiceField
 
     class Media:
@@ -36,20 +36,23 @@ class AutocompleteFilter(admin.SimpleListFilter):
         }
 
     def __init__(self, request, params, model, model_admin):
-        self.parameter_name = '{}__{}__exact'.format(self.field_name, self.field_pk)
+        field_name = self.parameter_name
+        self.parameter_name = "{}__{}__exact".format(field_name, self.field_pk)
         super().__init__(request, params, model, model_admin)
 
         if self.rel_model:
             model = self.rel_model
 
-        remote_field = model._meta.get_field(self.field_name).remote_field
+        model_field_name = self.rel_parameter_name or field_name
+
+        remote_field = model._meta.get_field(model_field_name).remote_field
 
         widget = AutocompleteSelect(remote_field,
                                     model_admin.admin_site,
                                     custom_url=self.get_autocomplete_url(request, model_admin),)
         form_field = self.get_form_field()
         field = form_field(
-            queryset=self.get_queryset_for_field(model, self.field_name),
+            queryset=self.get_queryset_for_field(model, model_field_name),
             widget=widget,
             required=False,
         )
@@ -57,7 +60,7 @@ class AutocompleteFilter(admin.SimpleListFilter):
         self._add_media(model_admin, widget)
 
         attrs = self.widget_attrs.copy()
-        attrs['id'] = 'id-%s-dal-filter' % self.field_name
+        attrs['id'] = 'id-%s-dal-filter' % field_name
         if self.is_placeholder_title:
             # Upper case letter P as dirty hack for bypass django2 widget force placeholder value as empty string ("")
             attrs['data-Placeholder'] = self.title
