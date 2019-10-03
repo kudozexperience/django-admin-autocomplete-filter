@@ -36,15 +36,8 @@ class AutocompleteFilter(admin.SimpleListFilter):
         }
 
     def __init__(self, request, params, model, model_admin):
-        if isinstance(self.parameter_name, tuple):
-            field_name = self.parameter_name[0]
-            self.rel_model = self.parameter_name[1]
-            self.rel_parameter_name = self.parameter_name[2]
-        else:
-            field_name = self.parameter_name
-
+        field_name = self.parameter_name
         self.parameter_name = "{}__{}__exact".format(field_name, self.field_pk)
-        super().__init__(request, params, model, model_admin)
 
         if self.rel_model:
             model = self.rel_model
@@ -56,6 +49,9 @@ class AutocompleteFilter(admin.SimpleListFilter):
 
         if not self.title:
             self.title = field.verbose_name.title()
+
+        # Initialize super class
+        super().__init__(request, params, model, model_admin)
 
         widget = AutocompleteSelect(remote_field,
                                     model_admin.admin_site,
