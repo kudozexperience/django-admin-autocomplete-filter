@@ -10,11 +10,12 @@ class AdminAutoFiltersMixin(object):
 
     def __init__(self, *args, **kwargs):
         autocomplete_filters = ()
-        for filter_tuple in self.autocomplete_list_filter:
-            parameter_name = filter_tuple[1]
-            filterClassName = "AutocompleteFilter%s" % (parameter_name,)
-            filterClassArgs = {"parameter_name": parameter_name}
-            filterClass = type(filterClassName, (AutocompleteFilter,), filterClassArgs)
+        for name in self.autocomplete_list_filter:
+            filterClass = type(
+                "AutocompleteFilterForMixin",
+                (AutocompleteFilter,),
+                {"parameter_name": name},
+            )
             autocomplete_filters += (filterClass,)
 
         self.list_filter = autocomplete_filters + self.list_filter
