@@ -17,7 +17,7 @@ class AutocompleteSelect(Base):
 
 class AutocompleteFilter(admin.SimpleListFilter):
     template = 'django-admin-autocomplete-filter/autocomplete-filter.html'
-    title = ''
+    title = None
     field_pk = 'id'
     placeholder = None
     widget_attrs = {}
@@ -36,7 +36,13 @@ class AutocompleteFilter(admin.SimpleListFilter):
         }
 
     def __init__(self, request, params, model, model_admin):
-        field_name = self.parameter_name
+        if isinstance(self.parameter_name, tuple):
+            field_name = self.parameter_name[0]
+            self.rel_model = self.parameter_name[1]
+            self.rel_parameter_name = self.parameter_name[2]
+        else:
+            field_name = self.parameter_name
+
         self.parameter_name = "{}__{}__exact".format(field_name, self.field_pk)
         super().__init__(request, params, model, model_admin)
 
