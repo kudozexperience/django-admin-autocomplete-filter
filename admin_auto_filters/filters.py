@@ -19,7 +19,7 @@ class AutocompleteFilter(admin.SimpleListFilter):
     template = 'django-admin-autocomplete-filter/autocomplete-filter.html'
     title = ''
     field_pk = 'id'
-    is_placeholder_title = False
+    placeholder = None
     widget_attrs = {}
     rel_model = None
     rel_parameter_name = None
@@ -45,7 +45,11 @@ class AutocompleteFilter(admin.SimpleListFilter):
 
         model_field_name = self.rel_parameter_name or field_name
 
-        remote_field = model._meta.get_field(model_field_name).remote_field
+        field = model._meta.get_field(model_field_name)
+        remote_field = field.remote_field
+
+        if not self.title:
+            self.title = field.verbose_name.title()
 
         widget = AutocompleteSelect(remote_field,
                                     model_admin.admin_site,
@@ -60,10 +64,14 @@ class AutocompleteFilter(admin.SimpleListFilter):
         self._add_media(model_admin, widget)
 
         attrs = self.widget_attrs.copy()
-        attrs['id'] = 'id-%s-dal-filter' % field_name
-        if self.is_placeholder_title:
-            # Upper case letter P as dirty hack for bypass django2 widget force placeholder value as empty string ("")
-            attrs['data-Placeholder'] = self.title
+        attrs["id"] = "id-%s-dal-filter" % field_name
+        # Upper case letter P as dirty hack for bypass django2 widget force placeholder value as empty string ("")
+        if self.placeholder:
+            attrs["data-Placeholder"] = self.placeholder
+        else:
+            placeholder = "%s %s" % ("Filter by", self.title)
+            attrs["data-Placeholder"] = placeholder
+
         self.rendered_widget = field.widget.render(
             name=self.parameter_name,
             value=self.used_parameters.get(self.parameter_name, ''),
